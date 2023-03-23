@@ -14,16 +14,16 @@ namespace cs
         static QCTraceSimulator getTraceSimulator(bool full_depth)
         {
             var config = new QCTraceSimulatorConfiguration();
-            config.useDepthCounter = true;
-            config.useWidthCounter = true;
-            config.usePrimitiveOperationsCounter = true;
-            config.throwOnUnconstraintMeasurement = false;
+            config.UseDepthCounter = true;
+            config.UseWidthCounter = true;
+            config.UsePrimitiveOperationsCounter = true;
+            config.ThrowOnUnconstrainedMeasurement = false;
 
             if (full_depth)
             {
-                config.gateTimes[PrimitiveOperationsGroups.CNOT] = 1;
-                config.gateTimes[PrimitiveOperationsGroups.Measure] = 1; // count all one and 2 qubit measurements as depth 1
-                config.gateTimes[PrimitiveOperationsGroups.QubitClifford] = 1; // qubit Clifford depth 1
+                config.TraceGateTimes[PrimitiveOperationsGroups.CNOT] = 1;
+                config.TraceGateTimes[PrimitiveOperationsGroups.Measure] = 1; // count all one and 2 qubit measurements as depth 1
+                config.TraceGateTimes[PrimitiveOperationsGroups.QubitClifford] = 1; // qubit Clifford depth 1
             }
             return new QCTraceSimulator(config);
         }

@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Microsoft.Quantum.Simulation.Simulators.QCTraceSimulators;
 
 using FileHelpers; // csv parsing
@@ -29,14 +30,23 @@ namespace cs
         public long DepthMin;
         public long DepthMax;
         [FieldConverter(typeof(QDecimalConverter))]
-        public decimal StartTimeAverage;
+        public decimal StartTimeDifferenceAverage;
         [FieldConverter(typeof(QDecimalConverter))]
-        public decimal StartTimeSecondMoment;
+        public decimal StartTimeDifferenceSecondMoment;
         [FieldConverter(typeof(QDecimalConverter))] // [FieldConverter(ConverterKind.Decimal, ".")]
-        public decimal? StartTimeVariance;
-        public long StartTimeSum;
-        public long StartTimeMin;
-        public long StartTimeMax;
+        public decimal? StartTimeDifferenceVariance;
+        public long StartTimeDifferenceSum;
+        public long StartTimeDifferenceMin;
+        public long StartTimeDifferenceMax;
+        [FieldConverter(typeof(QDecimalConverter))]
+        public decimal WidthAverage;
+        [FieldConverter(typeof(QDecimalConverter))]
+        public decimal WidthSecondMoment;
+        [FieldConverter(typeof(QDecimalConverter))]
+        public decimal? WidthVariance;
+        public long WidthSum;
+        public long WidthMin;
+        public long WidthMax;
     }
 
     [DelimitedRecord("\t")]
@@ -152,7 +162,7 @@ namespace cs
             }
             else
             {
-                return Decimal.Parse(from);
+                return Decimal.Parse(from, NumberStyles.Number | NumberStyles.AllowExponent);
             }
         }
         public override string FieldToString(object fieldValue)

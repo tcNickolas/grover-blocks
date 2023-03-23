@@ -12,117 +12,81 @@ namespace QUtilities
         }
     }
 
-    operation SWAPBytes (x: Qubit[], y: Qubit[]) : Unit {
-        body (...)
+    operation SWAPBytes (x: Qubit[], y: Qubit[]) : Unit is Adj {
+        for i in 0..7
         {
-            for (i in 0..7)
-            {
-                SWAP(x[i], y[i]);
-            }
+            SWAP(x[i], y[i]);
         }
-        adjoint auto;
     }
 
-    operation CNOTBytes (x: Qubit[], y: Qubit[]) : Unit {
-        body (...)
+    operation CNOTBytes (x: Qubit[], y: Qubit[]) : Unit is Adj {
+        for i in 0..7
         {
-            for (i in 0..7)
-            {
-                CNOT(x[i], y[i]);
-            }
+            CNOT(x[i], y[i]);
         }
-        adjoint auto;
     }
 
-    operation CNOTnBits (x: Qubit[], y: Qubit[], n: Int) : Unit {
-        body (...)
+    operation CNOTnBits (x: Qubit[], y: Qubit[], n: Int) : Unit is Adj {
+        for i in 0..(n-1)
         {
-            for (i in 0..(n-1))
-            {
-                CNOT(x[i], y[i]);
-            }
+            CNOT(x[i], y[i]);
         }
-        adjoint auto;
     }
 
-    operation REWIRE (x: Qubit, y: Qubit, free: Bool) : Unit {
-        body (...)
+    operation REWIRE (x: Qubit, y: Qubit, free: Bool) : Unit is Adj {
+        if (not free)
         {
-            if (not free)
-            {
-                SWAP(x, y);
-            }
+            SWAP(x, y);
         }
-        adjoint auto;
     }
 
-    operation REWIREBytes (x: Qubit[], y: Qubit[], free: Bool) : Unit {
-        body (...)
+    operation REWIREBytes (x: Qubit[], y: Qubit[], free: Bool) : Unit is Adj {
+        if (not free)
         {
-            if (not free)
-            {
-                SWAPBytes(x, y);
-            }
+            SWAPBytes(x, y);
         }
-        adjoint auto;
     }
 
-    operation ccnot(x: Qubit, y: Qubit, z: Qubit, costing: Bool) : Unit {
-        body (...)
+    operation ccnot(x: Qubit, y: Qubit, z: Qubit, costing: Bool) : Unit is Adj {
+        if (costing)
         {
-            if (costing)
-            {
-                ccnot_T_depth_1(x, y, z);
-                // ccnot_7_t_depth_4(x, y, z);
-            }
-            else
-            {
-                CCNOT(x, y, z);
-            }
+            ccnot_T_depth_1(x, y, z);
+            // ccnot_7_t_depth_4(x, y, z);
         }
-        adjoint auto;
+        else
+        {
+            CCNOT(x, y, z);
+        }
     }
 
     // assumes output qubit set to Zero
     // linear-program xor equivalent to
     // bool outp = 0
     // outp = in_1 ^ in_2
-    operation LPXOR (in_1: Qubit, in_2: Qubit, outp: Qubit) : Unit
+    operation LPXOR (in_1: Qubit, in_2: Qubit, outp: Qubit) : Unit is Adj
     {
-        body (...)
-        {
-            CNOT(in_1, outp);
-            CNOT(in_2, outp);
-        }
-        adjoint auto;
+        CNOT(in_1, outp);
+        CNOT(in_2, outp);
     }
 
     // assumes outp = 0
-    operation LPXNOR(in_1: Qubit, in_2: Qubit, outp: Qubit) : Unit
+    operation LPXNOR(in_1: Qubit, in_2: Qubit, outp: Qubit) : Unit is Adj
     {
-        body (...)
-        {
-            LPXOR(in_1, in_2, outp);
-            X(outp);
-        }
-        adjoint auto;
+        LPXOR(in_1, in_2, outp);
+        X(outp);
     }
 
-    operation LPAND (in_1: Qubit, in_2: Qubit, outp: Qubit, costing: Bool) : Unit
+    operation LPAND (in_1: Qubit, in_2: Qubit, outp: Qubit, costing: Bool) : Unit is Adj
     {
-        body (...)
+        if (costing)
         {
-            if (costing)
-            {
-                AND(in_1, in_2, outp);
-            }
-            else
-            {
-                // ccnot does not assume output bit to be set to Zero!
-                ccnot(in_1, in_2, outp, costing);
-            }
+            AND(in_1, in_2, outp);
         }
-        adjoint auto;
+        else
+        {
+            // ccnot does not assume output bit to be set to Zero!
+            ccnot(in_1, in_2, outp, costing);
+        }
     }
 
     // --------------------------------------------------------------------------
@@ -136,17 +100,16 @@ namespace QUtilities
 
     operation AND(control1 : Qubit, control2 : Qubit, target : Qubit) : Unit {
         body (...) {
-            using (anc = Qubit()) {
-                H(target);
-                LinearPrepare(control1, control2, target, anc);
-                Adjoint T(control1);
-                Adjoint T(control2);
-                T(target);
-                T(anc);
-                Adjoint LinearPrepare(control1, control2, target, anc);
-                H(target);
-                S(target);
-            }
+            use anc = Qubit();
+            H(target);
+            LinearPrepare(control1, control2, target, anc);
+            Adjoint T(control1);
+            Adjoint T(control2);
+            T(target);
+            T(anc);
+            Adjoint LinearPrepare(control1, control2, target, anc);
+            H(target);
+            S(target);
         }
         adjoint (...) {
             H(target);
@@ -211,11 +174,10 @@ namespace QUtilities
     // /// - For the circuit diagram see Figure 1 on
     // ///   [ Page 3 of arXiv:1210.0974v2 ](https://arxiv.org/pdf/1210.0974v2.pdf#page=2)
     operation ccnot_T_depth_1 (control1 : Qubit, control2 : Qubit, target : Qubit) : Unit is Adj + Ctl {
-        using (auxillaryRegister = Qubit[4]) {
+        use auxillaryRegister = Qubit[4];
 
-            // apply UVU† where U is outer circuit and V is inner circuit
-            ApplyWithCA(TDepthOneCCNOTOuterCircuit, TDepthOneCCNOTInnerCircuit, auxillaryRegister + [target, control1, control2]);
-        }
+        // apply UVU† where U is outer circuit and V is inner circuit
+        ApplyWithCA(TDepthOneCCNOTOuterCircuit, TDepthOneCCNOTInnerCircuit, auxillaryRegister + [target, control1, control2]);
     }
 
 
@@ -268,30 +230,27 @@ namespace QUtilities
 	/// ancilla which are not uncomputed.
 	/// If controlQubits has n qubits, then this needs n-2
 	/// blankControlQubits.
-	operation CompressControls(controlQubits : Qubit[], blankControlQubits : Qubit[], output : Qubit, costing: Bool) : Unit {
-		body (...){
-			let nControls = Length(controlQubits);
-			let nNewControls = Length(blankControlQubits);
-			if (nControls == 2){
-				LPAND(controlQubits[0], controlQubits[1], output, costing);
+	operation CompressControls(controlQubits : Qubit[], blankControlQubits : Qubit[], output : Qubit, costing: Bool) : Unit is Adj {
+		let nControls = Length(controlQubits);
+		let nNewControls = Length(blankControlQubits);
+		if (nControls == 2){
+			LPAND(controlQubits[0], controlQubits[1], output, costing);
+		} else {
+			Fact(nNewControls >= nControls/2, $"Cannot compress {nControls}
+				control qubits to {nNewControls} qubits without more ancilla");
+			Fact(nNewControls <= nControls,
+				$"Cannot compress {nControls} control qubits into
+				{nNewControls} qubits because there are too few controls");
+			let compressLength = nControls - nNewControls;
+			for idx in 0 .. 2 .. nControls - 2 {
+				LPAND(controlQubits[idx], controlQubits[idx + 1], blankControlQubits[idx/2], costing);
+			}
+			if (nControls % 2 == 0){
+				CompressControls(blankControlQubits[0.. nControls/2 - 1], blankControlQubits[nControls/2 .. nNewControls - 1], output, costing);
 			} else {
-				Fact(nNewControls >= nControls/2, $"Cannot compress {nControls}
-					control qubits to {nNewControls} qubits without more ancilla");
-				Fact(nNewControls <= nControls,
-					$"Cannot compress {nControls} control qubits into
-					{nNewControls} qubits because there are too few controls");
-				let compressLength = nControls - nNewControls;
-				for (idx in 0.. 2 .. nControls - 2){
-					LPAND(controlQubits[idx], controlQubits[idx + 1], blankControlQubits[idx/2], costing);
-				}
-				if (nControls % 2 == 0){
-					CompressControls(blankControlQubits[0.. nControls/2 - 1], blankControlQubits[nControls/2 .. nNewControls - 1], output, costing);
-				} else {
-					CompressControls([controlQubits[nControls - 1]] + blankControlQubits[0.. nControls/2 - 1], blankControlQubits[nControls/2 .. nNewControls - 1], output, costing);
-				}
+				CompressControls([controlQubits[nControls - 1]] + blankControlQubits[0.. nControls/2 - 1], blankControlQubits[nControls/2 .. nNewControls - 1], output, costing);
 			}
 		}
-		adjoint auto;
 	}
 
 
@@ -309,60 +268,55 @@ namespace QUtilities
 	/// but this explicitly forms a binary tree to achieve a logarithmic
 	/// depth. This means it borrows n-1 clean qubits.
 	operation TestIfAllOnes(xs : Qubit[], output : Qubit, costing: Bool) : Unit {
-		body (...){
+		body (...) {
 			let nQubits = Length(xs);
 			if (nQubits == 1){
 				CNOT(xs[0], output);
 			} elif (nQubits == 2){
 				ccnot(xs[0], xs[1], output, costing);
 			} else {
-				using ((spareControls, ancillaOutput) = (Qubit[nQubits - 2], Qubit())){
-					CompressControls(xs, spareControls, ancillaOutput, costing);
-					CNOT(ancillaOutput, output);
-					(Adjoint CompressControls)(xs, spareControls, ancillaOutput, costing);
-				}
+				use (spareControls, ancillaOutput) = (Qubit[nQubits - 2], Qubit());
+				CompressControls(xs, spareControls, ancillaOutput, costing);
+				CNOT(ancillaOutput, output);
+				(Adjoint CompressControls)(xs, spareControls, ancillaOutput, costing);
 			}
 		}
-		controlled (controls, ...){
+		controlled (controls, ...) {
 			TestIfAllOnes(controls + xs, output, costing);
 		}
 		adjoint controlled auto;
 	}
 
 
-    operation CompareQubitstring(success: Qubit, qubitstring: Qubit[], target: Bool[], costing: Bool) : Unit
+    operation CompareQubitstring(success: Qubit, qubitstring: Qubit[], target: Bool[], costing: Bool) : Unit is Adj
     {
-        body (...)
+        if (Length(target) == Length(qubitstring))
         {
-            if (Length(target) == Length(qubitstring))
+            // flip wires expected to be 0 in the target, to allow comparison
+            for i in 0 .. Length(target)-1
             {
-                // flip wires expected to be 0 in the target, to allow comparison
-                for (i in 0..(Length(target)-1))
+                if (target[i] == false)
                 {
-                    if (target[i] == false)
-                    {
-                        X(qubitstring[i]);
-                    }
-                }
-
-                // record success
-                TestIfAllOnes(qubitstring, success, costing);
-
-                // undo flipping
-                for (i in 0..(Length(target)-1))
-                {
-                    if (target[i] == false)
-                    {
-                        X(qubitstring[i]);
-                    }
+                    X(qubitstring[i]);
                 }
             }
 
-            // this can also be done in the following way using the Q# standard library
-            // but it's more expensive
-            // let controlled_op = ControlledOnBitString(target, X);
-            // controlled_op(qubitstring, success);
+            // record success
+            TestIfAllOnes(qubitstring, success, costing);
+
+            // undo flipping
+            for i in 0 .. Length(target)-1
+            {
+                if (target[i] == false)
+                {
+                    X(qubitstring[i]);
+                }
+            }
         }
-        adjoint auto;
+
+        // this can also be done in the following way using the Q# standard library
+        // but it's more expensive
+        // let controlled_op = ControlledOnBitString(target, X);
+        // controlled_op(qubitstring, success);
     }
 }
